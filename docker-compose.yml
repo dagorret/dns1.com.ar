@@ -1,51 +1,23 @@
 services:
   dns1-bind9:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ghcr.io/dagorret/dns1-argentina:latest
+    image: ghcr.io/dagorret/dns1.com.ar:v1.1.0
     container_name: dns1-bind9
-    restart: unless-stopped
-    
+    restart: always
     ports:
-      - "1053:53/udp"
-      - "1053:53/tcp"
-      - "10853:853/tcp"
-      - "10443:443/tcp"
-    
+      - "53:53/udp"
+      - "53:53/tcp"
+      - "853:853/tcp"
+      - "8080:8080/tcp"
     volumes:
       - ./bind-config:/etc/bind
-      - dns1-cache:/var/cache/bind
-      - dns1-run:/var/run/named
-    
-    networks:
-      - dns1-network
-    
-    environment:
-      - TZ=America/Argentina/Cordoba
-    
-    # RESOURCE LIMITS (VPS 1vCPU / 1GB)
+      - dns-cache:/var/cache/bind
+      - dns-run:/var/run/named
     deploy:
       resources:
         limits:
-          cpus: '0.8'           # 80% de 1 vCPU
-          memory: 768M          # 768MB máximo
-        reservations:
-          cpus: '0.5'           # 50% reservado
-          memory: 512M          # 512MB reservado
-    
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+          cpus: '0.9'
+          memory: 512M
 
 volumes:
-  dns1-cache:
-    driver: local
-  dns1-run:
-    driver: local
-
-networks:
-  dns1-network:
-    driver: bridge
+  dns-cache:
+  dns-run:
