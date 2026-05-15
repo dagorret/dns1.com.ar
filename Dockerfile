@@ -24,31 +24,37 @@ RUN wget https://downloads.isc.org/isc/bind9/9.20.21/bind-9.20.21.tar.xz && \
     make install && \
     cd / && rm -rf /usr/local/src/*
 
-# STAGE 2: Runtime - Solo lo necesario
+# STAGE 2: Runtime
 FROM debian:13-slim
 
+# Instalar TODAS las dependencias de runtime
 RUN apt update && apt install -y \
     libssl3 libuv1t64 libnghttp2-14 libjson-c5 libcap2 liburcu8t64 \
-    ca-certificates dnsutils wget --no-install-recommends && \
+    ca-certificates dnsutils wget libc6 libz1 --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# Copiar binarios compilados del builder
+# Copiar BINARIOS + LIBRERÍAS compiladas
 COPY --from=builder /usr/local /usr/local
 
-# Crear usuario 'named'
+# ⭐ CRITICAL: ldconfig para registrar librerías custom
+RUN ldconfig -n /usr/local/lib && \
+    echo "/usr/local/lib" > /etc/ld.so.conf.d/bind9.conf && \
+    ldconfig
+
+# Verificar que carga bien
+RUN /usr/local/sbin/named -V | head -5
+
+# Crear usuario
 RUN groupadd -r named && useradd -r -g named -s /sbin/nologin named
 
-# Crear directorios y descargar root hints
+# Directorios
 RUN mkdir -p /etc/bind /var/cache/bind /var/run/named /var/bind && \
     wget https://www.internic.net/domain/named.root -O /etc/bind/db.root && \
     chown -R named:named /etc/bind /var/cache/bind /var/run/named /var/bind
 
-# Puertos
 EXPOSE 53/udp 53/tcp 853/tcp 443/tcp
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD dig @127.0.0.1 google.com || exit 1
 
-# Logs a stdout de Docker
 CMD ["/usr/local/sbin/named", "-g", "-u", "named", "-c", "/etc/bind/named.conf"]
