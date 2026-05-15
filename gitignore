@@ -1,0 +1,45 @@
+# Docker
+docker-compose.override.yml
+.env
+.env.local
+
+# Bind9
+bind-config/managed-keys.bind*
+bind-config/named.conf.local
+bind-config/zones/
+!bind-config/zones/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Certificados
+*.pem
+*.key
+*.crt
+
+# Node (si agregamos web después)
+node_modules/
+package-lock.json
+
+# Python (si agregamos scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build
+dist/
+build/
+
+# Misc
+.tmp/
+*.bak
